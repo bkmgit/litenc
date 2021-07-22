@@ -139,4 +139,167 @@ Output:
 Yes there is a problem exposed in the output.
 
 
+## Setup on Debian 10
+
+On a fresh Debian 10 machine, setup a user with sudo privileges.
+Then update the machine and install the following dependencies 
+
+```bash
+  cd $HOME
+  sudo apt-get update
+  sudo apt-get install git autoconf gcc libtool libxml2-dev libssh2-1-dev 
+  sudo apt-get install make libncurses5-dev zlib1g-dev libreadline-dev libssl-dev
+  sudo apt-get install libtirpc python-dev python-pip libxml2-dev
+  pip install paramiko lxml
+```
+
+Modify the ssh settings by adding the lines
+
+ Port 80
+ Port 830
+ Subsystem netconf "/usr/sbin/netconf-subsystem --ncxserver-sockname=830@/tmp/ncxserver.sock"
+
+to the file `/etc/ssh/sshd_config`
+
+Restart the ssh server
+
+```bash
+   sudo /etc/init.d/ssh restart
+```
+
+Then clone the repository with the library implementation and build the library
+
+```bash
+  git clone git://git.code.sf.net/p/yuma123/git yuma123-git
+  cd yuma123-git
+  autoreconf -i -f
+  ./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --prefix=/usr
+  make
+  sudo make install
+```
+
+Build the traffic generator
+
+```bash
+   cd example-modules/
+   cd ietf-traffic-generator/
+   autoreconf -i -f
+   ./configure CFLAGS="-g -O0"  CXXFLAGS="-g -O0" --prefix=/usr 
+   sudo make install
+```
+
+Build the Yang-rpc module
+
+```bash
+  cd ..
+  autoreconf -i -f
+  ./configure CFLAGS="-g -O0"  CXXFLAGS="-g -O0" --prefix=/usr 
+  make
+  sudo make install
+  sudo python setup.py install
+```
+
+Now clone, build and run the test code
+
+```bash
+  cd $HOME
+  git clone https://github.com/vlvassilev/litenc
+  cd litenc
+  sudo python setup.py install
+  cd tntapi
+  sudo python setup.py install
+  cd example
+  cd ietf-network-interconnect-tester
+  python ./rfc2544.py --config=../topology-ietf111.xml --dst-node=tester0 --dst-node-interface=eth1 --src-
+node=tester0 --src-node-interface=eth0 --dst-mac-address="70:B3:D5:EC:20:01" --src-mac-address="70:B3:D5:EC:20:0
+0" --dst-ipv4-address="192.168.1.1" --src-ipv4-udp-port=49184 --src-ipv4-address="192.168.0.1" --frame-size=64 -
+-trial-time=2 | grep "^#"
+```
+
+## Setup on CentOS 8
+
+
+On a fresh CentOS 8 machine, setup a user with sudo privileges.
+Then update the machine and install the following dependencies 
+
+```bash
+  cd $HOME
+  sudo dnf update
+  sudo dnf group install "Development Tools"
+  sudo dnf -y install epel-release python2-devel policycoreutils-python-utils libtirpc-devel
+  sudo dnf install ncurses-devel readline-devel libxml2-devel zlib-devel openssl-devel libssh2-devel
+  pip2 install --user lxml
+  pip2 install --user paramiko
+```
+
+Modify the ssh settings by adding the lines
+
+ Port 80
+ Port 830
+ Subsystem netconf "/usr/sbin/netconf-subsystem --ncxserver-sockname=830@/tmp/ncxserver.sock"
+
+to the file `/etc/ssh/sshd_config`
+
+Restart the ssh server
+
+```bash
+  sudo semanage port -a -t ssh_port_t -p tcp 830
+  sudo service sshd restart
+```
+
+Then clone the repository with the library implementation and build the library
+
+```bash
+  git clone git://git.code.sf.net/p/yuma123/git yuma123-git
+  cd yuma123-git
+  autoreconf -i -f
+  ./configure CFLAGS='-g -O0' CXXFLAGS='-g -O0' --prefix=/usr
+  make
+  sudo make install
+```
+
+Build the traffic generator
+
+```bash
+   cd example-modules/
+   cd ietf-traffic-generator/
+   autoreconf -i -f
+   ./configure CFLAGS="-g -O0"  CXXFLAGS="-g -O0" --prefix=/usr 
+   sudo make install
+```
+
+Build the Yang-rpc module
+
+```bash
+  cd ..
+  autoreconf -i -f
+  ./configure CFLAGS="-g -O0"  CXXFLAGS="-g -O0" --prefix=/usr 
+  make
+  sudo make install
+  sudo python2 setup.py install
+```
+
+Update Pythonpath so library can be found
+
+```bash
+  export PYTHONPATH=/usr/lib/python2.7/dist-packages/
+```
+
+Now clone, build and run the test code
+
+```bash
+  cd $HOME
+  git clone https://github.com/vlvassilev/litenc
+  cd litenc
+  sudo python2 setup.py install
+  cd tntapi
+  sudo python2 setup.py install
+  cd example
+  cd ietf-network-interconnect-tester
+  python2 ./rfc2544.py --config=../topology-ietf111.xml --dst-node=tester0 --dst-node-interface=eth1 --src-
+node=tester0 --src-node-interface=eth0 --dst-mac-address="70:B3:D5:EC:20:01" --src-mac-address="70:B3:D5:EC:20:0
+0" --dst-ipv4-address="192.168.1.1" --src-ipv4-udp-port=49184 --src-ipv4-address="192.168.0.1" --frame-size=64 -
+-trial-time=2 | grep "^#"
+```
+
 
